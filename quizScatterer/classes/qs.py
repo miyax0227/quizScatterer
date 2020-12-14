@@ -26,7 +26,7 @@ def regulateQuestion(q):
   return q
 
 # コサイン類似度を得る
-def cos_sim(v1, v2):
+def cosSim(v1, v2):
   """ コサイン類似度を得る
   Args: v1(np.Array), v2(np.Array): ベクトル(同次元)
   Returns: float: 類似度(-1～1)
@@ -34,18 +34,17 @@ def cos_sim(v1, v2):
   return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 # 問題ベクターから単語対類似度リスト（類似度が高い順）を得る
-def directProductOfWordVector(l1, l2):
+def getDirectProduct(l1, l2):
   """問題ベクターから単語対類似度リスト（類似度が高い順）を得る
   Args: l1(dict), l2(dict): 問題ベクター
   Returns: list[dic]: 単語対類似度リスト
   """
-
   directProduct = []
   for v1, v2 in itertools.product(l1, l2):
     directProduct.append({
       'word1': v1['surface'],
       'word2': v2['surface'],
-      'cosSim': cos_sim(v1['vector'], v2['vector'])
+      'cosSim': cosSim(v1['vector'], v2['vector'])
     })
   return sorted(directProduct, key=lambda x:x['cosSim'], reverse=True)
 
@@ -61,7 +60,7 @@ def getWakachigaki(text):
   return wakachigaki
 
 # 問題文から問題ベクターを得る
-def get_vector(text):
+def getVector(text):
   """問題文から問題ベクターを得る
   Args: text(str): 問題文
   Returns: dic: 問題ベクター
@@ -126,19 +125,19 @@ def getNounCountDict(questionVectors):
   return nounCountDict
 
 # 問題ベクター間距離関数
-def distanceFunction(l1, l2):
+def getDistance(l1, l2):
   """問題ベクター間距離関数
   Args: l1(dict), l2(dict): 問題ベクター
   Returns: float: 距離
   """
-  cosSims = directProductOfWordVector(l1, l2)
+  cosSims = getDirectProduct(l1, l2)
   dist = 0
   for i in range(min(9, len(cosSims))):
     dist +=  (1 - cosSims[i]['cosSim']) # * (1 / (i+1) ** 0.5)
   return dist
 
 # テキスト樹形図出力
-def textDendrogram(num, indent, Z, questions, n):
+def getTextDendrogram(num, indent, Z, questions, n):
   """テキスト樹形図出力
   Args: num(float): 枝番号
         indent: 表示する樹形
@@ -156,11 +155,11 @@ def textDendrogram(num, indent, Z, questions, n):
       branchChar = branchChars[branchRank-1]
     else:
       branchChar = "┬"
-    return textDendrogram(Z[int(num-n), 0], indent+branchChar, Z, questions, n) \
-         + textDendrogram(Z[int(num-n), 1], re.sub("[┬"+branchChars+"]","│",indent).replace("└","　")+"└", Z, questions, n)
+    return getTextDendrogram(Z[int(num-n), 0], indent+branchChar, Z, questions, n) \
+         + getTextDendrogram(Z[int(num-n), 1], re.sub("[┬"+branchChars+"]","│",indent).replace("└","　")+"└", Z, questions, n)
 
 # 最遠配置リストを得る
-def FarPosition(num, Z, dMatrix, n):
+def scatterQuestion(num, Z, dMatrix, n):
   """最遠配置リストを得る
   Args: num(float): 枝番号
         Z: クラスタリング結果
@@ -171,8 +170,8 @@ def FarPosition(num, Z, dMatrix, n):
   if(num < n):
     return [int(num)]
   else:
-    v1 = FarPosition(Z[int(num-n), 0], Z, dMatrix, n)
-    v2 = FarPosition(Z[int(num-n), 1], Z, dMatrix, n)
+    v1 = scatterQuestion(Z[int(num-n), 0], Z, dMatrix, n)
+    v2 = scatterQuestion(Z[int(num-n), 1], Z, dMatrix, n)
     i1 = 1
     i2 = 1
     d = 1.0 / (2.0 * (len(v1) + 1) * (len(v2) + 1))

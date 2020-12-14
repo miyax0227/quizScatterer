@@ -19,7 +19,7 @@ questions = [q for q in questions if not q == ""]
 questionsForVectors = [regulateQuestion(q) for q in questions]
 
 # ベクター作成
-vectors = [get_vector(v) for v in questionsForVectors]
+vectors = [getVector(v) for v in questionsForVectors]
 
 # サンプル
 # pprint(vectors[41])
@@ -39,10 +39,10 @@ for i in range(n):
     if i == j:
       dMatrix[i,j] = 0
     elif i > j:
-      dMatrix[i,j] = distanceFunction(vectors[i],vectors[j])
+      dMatrix[i,j] = getDistance(vectors[i],vectors[j])
       #dMatrix[i,j] = cos_sim(summaryVectors[i],summaryVectors[j])
     else:
-      dMatrix[i,j] = distanceFunction(vectors[j],vectors[i])
+      dMatrix[i,j] = getDistance(vectors[j],vectors[i])
       
 dArray = distance.squareform(dMatrix)
 
@@ -51,9 +51,9 @@ Z = linkage(dArray, method="ward")
 #pprint(Z)
 
 # テキスト樹形図出力
-for i in textDendrogram(n*2-2, "", Z, questions, n):
+for i in getTextDendrogram(n*2-2, "", Z, questions, n):
   print(i)
 
 # 最遠配置リスト出力
-for i in FarPosition(n*2-2, Z, dMatrix, n):
+for i in scatterQuestion(n*2-2, Z, dMatrix, n):
   print(str(i) + "." + questions[i])
