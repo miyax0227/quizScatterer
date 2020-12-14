@@ -16,7 +16,7 @@ execPath = os.path.dirname(__file__)
 # 学習済みベクターモデルの読込
 wv = gensim.models.Word2Vec.load(execPath + "/gensimModel/word2vec.gensim.model").wv
 # MeCab辞書読込
-mt = MeCab.Tagger('-r /home/linuxbrew/.linuxbrew/etc/mecabrc')
+mt = MeCab.Tagger('-r /usr/local/lib/mecab/dic/mecab-ipadic-neologd/')
 
 # 問題文正規化
 def regulateQuestion(q):
