@@ -149,7 +149,7 @@ def getTextDendrogram(num, indent, Z, questions, n):
   if(num < n):
     return [indent + str(int(num)) + "." + questions[int(num)]]
   else:
-    branchChars = "①②③④⑤⑥⑦⑧⑨⑩"
+    branchChars = "①②③④⑤⑥⑦⑧⑨"
     branchRank = int(n*2-num-1)
     if branchRank <= len(branchChars):
       branchChar = branchChars[branchRank-1]
