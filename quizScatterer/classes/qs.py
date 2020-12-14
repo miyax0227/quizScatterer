@@ -73,7 +73,6 @@ def get_vector(text):
     fields = node.feature.split(",")
     if fields[0] in ['名詞','動詞','形容詞'] \
       and not (fields[0] == '名詞' and fields[1] in ['代名詞','非自立','数']) \
-      and not (fields[0] == '名詞' and fields[2] in ['人名']) \
       and not (fields[0] == '動詞' and fields[1] in ['接尾']) \
       and not (fields[0] == '動詞' and fields[6] in ['する','いう','ある']) \
       and node.surface not in ['年'] \
