@@ -12,6 +12,9 @@ filename = sys.argv[1]
 with open(filename) as f:
   questions = f.read().splitlines()
 
+# 空文字列の行を除く
+questions = [q for q in questions if not q == ""]
+
 # 問題文正規化
 questionsForVectors = [regulateQuestion(q) for q in questions]
 
