@@ -133,7 +133,7 @@ def distanceFunction(l1, l2):
   """
   cosSims = directProductOfWordVector(l1, l2)
   dist = 0
-  for i in range(9):
+  for i in range(min(9, len(cosSims))):
     dist +=  (1 - cosSims[i]['cosSim']) # * (1 / (i+1) ** 0.5)
   return dist
 
