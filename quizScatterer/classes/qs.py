@@ -130,10 +130,13 @@ def getDistance(l1, l2):
   Args: l1(dict), l2(dict): 問題ベクター
   Returns: float: 距離
   """
+  threshold = 9
   cosSims = getDirectProduct(l1, l2)
   dist = 0
-  for i in range(min(9, len(cosSims))):
+  for i in range(min(threshold, len(cosSims))):
     dist +=  (1 - cosSims[i]['cosSim']) # * (1 / (i+1) ** 0.5)
+  if len(cosSims) < threshold:
+    dist += (len(cosSims) - threshold)
   return dist
 
 # テキスト樹形図出力
