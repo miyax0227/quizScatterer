@@ -18,12 +18,12 @@ sudo chmod 755 getGensimModel.sh
 ## コマンド
 
 ```shell
-python3 -m quizScatter INPUT_FILE (> OUTPUT_FILE)
+python3 -m quizScatterer INPUT_FILE (> OUTPUT_FILE)
 ```
 
 例：
 ```shell
-python3 -m quizScatter sample.txt > result.txt
+python3 -m quizScatterer sample.txt > result.txt
 ```
 
 ## 作者
