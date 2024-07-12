@@ -10,18 +10,20 @@ import MeCab
 import numpy as np
 
 # 実行ファイルパスを取得
-execPath = os.path.dirname(__file__)
+exec_path = os.path.dirname(__file__)
 # 学習済みベクターモデルの読込
-wv = gensim.models.Word2Vec.load(execPath + "/gensimModel/word2vec.gensim.model").wv
+word2vec_model = gensim.models.Word2Vec.load(
+    exec_path + "/gensimModel/word2vec.gensim.model"
+).wv
 # MeCab辞書読込
-mt = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
+mecab_tagger = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
 
 
 # 問題文正規化
 def regulate_question(question: str) -> str:
     question = question.translate(str.maketrans({"（": "(", "）": ")"}))
-    question = re.sub("\([\u3041-\u309f・]+\)", "", question)
-    question = re.sub("[?？]", "", question)
+    question = re.sub(r"\([\u3041-\u309f・]+\)", "", question)
+    question = re.sub(r"[?？]", "", question)
     return question
 
 
@@ -37,23 +39,28 @@ def compute_cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
-# 問題ベクターから単語対類似度リスト（類似度が高い順）を得る
-def compute_direct_product(l1: dict, l2: dict) -> list[dict]:
+def compute_direct_product(
+    question_vectors_list_1: list[dict], question_vectors_list_2: list[dict]
+) -> list[dict]:
     """問題ベクターから単語対類似度リスト（類似度が高い順）を得る
     Args:
-        l1(dict): 問題ベクター
-        l2(dict): 問題ベクター
+        question_vectors_list_1(list[dict]): 問題ベクター
+        question_vectors_list_2(list[dict]): 問題ベクター
 
     Returns:
         list[dict]: 単語対類似度リスト
     """
     direct_product_list = []
-    for v1, v2 in itertools.product(l1, l2):
+    for question_vector_1, question_vector_2 in itertools.product(
+        question_vectors_list_1, question_vectors_list_2
+    ):
         direct_product_list.append(
             {
-                "word1": v1["surface"],
-                "word2": v2["surface"],
-                "cosSim": compute_cosine_similarity(v1["vector"], v2["vector"]),
+                "word1": question_vector_1["surface"],
+                "word2": question_vector_2["surface"],
+                "cosSim": compute_cosine_similarity(
+                    question_vector_1["vector"], question_vector_2["vector"]
+                ),
             }
         )
     return sorted(direct_product_list, key=lambda x: x["cosSim"], reverse=True)
@@ -68,7 +75,7 @@ def create_wakachigaki_list(text: str) -> list[dict]:
     Returns:
         list[dict]: 分かち書きリスト
     """
-    node = mt.parseToNode(text)
+    node = mecab_tagger.parseToNode(text)
     wakachigaki_list = []
     while node:
         wakachigaki_list.append({"_surface": node.surface, "feature": node.feature})
@@ -85,7 +92,7 @@ def get_text_vector(text: str) -> list[dict]:
     Returns:
         list[dict]: 問題ベクター
     """
-    node = mt.parseToNode(text)
+    node = mecab_tagger.parseToNode(text)
     noun_list = []
     elements = []
     while node:
@@ -96,7 +103,7 @@ def get_text_vector(text: str) -> list[dict]:
             and not (fields[0] == "動詞" and fields[1] in ["接尾"])
             and not (fields[0] == "動詞" and fields[6] in ["する", "いう", "ある"])
             and node.surface not in ["年"]
-            and node.surface in wv
+            and node.surface in word2vec_model
         ):
             if node.surface not in elements:
                 elements.append(node.surface)
@@ -105,7 +112,7 @@ def get_text_vector(text: str) -> list[dict]:
                         "surface": node.surface,
                         "type": fields[0] + "." + fields[1],
                         "fields": fields,
-                        "vector": wv[node.surface],
+                        "vector": word2vec_model[node.surface],
                         "count": 1,
                     }
                 )
@@ -293,10 +300,9 @@ def scatter_questions(
 
         # 2つのリストの間で最も近い要素のインデックスを取得する
         distance_array = distance_matrix[np.ix_(v1, v2)]
-        # print(dMatrixv1v2)
         min_index = np.unravel_index(np.argmin(distance_array), distance_array.shape)
-        min_index_v1 = min_index[0]
-        min_index_v2 = min_index[1]
+        min_index_v1 = int(min_index[0])
+        min_index_v2 = int(min_index[1])
         # v1は当該要素が先頭に来るよう要素を移動
         v1 = v1[min_index_v1:] + v1[0:min_index_v1]
         # v2は当該要素が真ん中に来るよう要素を移動
