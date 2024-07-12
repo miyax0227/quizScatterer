@@ -8,9 +8,6 @@ from pprint import pprint
 import gensim
 import MeCab
 import numpy as np
-import pandas as pd
-from scipy.cluster.hierarchy import dendrogram, linkage
-from scipy.spatial import distance
 
 # 実行ファイルパスを取得
 execPath = os.path.dirname(__file__)
@@ -21,57 +18,75 @@ mt = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
 
 
 # 問題文正規化
-def regulateQuestion(q):
-    q = q.translate(str.maketrans({"（": "(", "）": ")"}))
-    q = re.sub("\([\u3041-\u309f・]+\)", "", q)
-    q = re.sub("[?？]", "", q)
-    return q
+def regulate_question(question: str) -> str:
+    question = question.translate(str.maketrans({"（": "(", "）": ")"}))
+    question = re.sub("\([\u3041-\u309f・]+\)", "", question)
+    question = re.sub("[?？]", "", question)
+    return question
 
 
-# コサイン類似度を得る
-def cosSim(v1, v2):
+def compute_cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     """コサイン類似度を得る
-    Args: v1(np.Array), v2(np.Array): ベクトル(同次元)
+
+    Args:
+        v1(np.Array): ベクトル
+        v2(np.Array): ベクトル v1と同次元
+
     Returns: float: 類似度(-1～1)
     """
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
 # 問題ベクターから単語対類似度リスト（類似度が高い順）を得る
-def getDirectProduct(l1, l2):
+def compute_direct_product(l1: dict, l2: dict) -> list[dict]:
     """問題ベクターから単語対類似度リスト（類似度が高い順）を得る
-    Args: l1(dict), l2(dict): 問題ベクター
-    Returns: list[dic]: 単語対類似度リスト
+    Args:
+        l1(dict): 問題ベクター
+        l2(dict): 問題ベクター
+
+    Returns:
+        list[dict]: 単語対類似度リスト
     """
-    directProduct = []
+    direct_product_list = []
     for v1, v2 in itertools.product(l1, l2):
-        directProduct.append(
+        direct_product_list.append(
             {
                 "word1": v1["surface"],
                 "word2": v2["surface"],
-                "cosSim": cosSim(v1["vector"], v2["vector"]),
+                "cosSim": compute_cosine_similarity(v1["vector"], v2["vector"]),
             }
         )
-    return sorted(directProduct, key=lambda x: x["cosSim"], reverse=True)
+    return sorted(direct_product_list, key=lambda x: x["cosSim"], reverse=True)
 
 
-def getWakachigaki(text):
-    node = mt.parseToNode(text)
-    wakachigaki = []
-    while node:
-        wakachigaki.append({"_surface": node.surface, "feature": node.feature})
-        node = node.next
-    return wakachigaki
+def create_wakachigaki_list(text: str) -> list[dict]:
+    """分かち書きリストを作成する
 
+    Args:
+        text(str): 問題文
 
-# 問題文から問題ベクターを得る
-def getVector(text):
-    """問題文から問題ベクターを得る
-    Args: text(str): 問題文
-    Returns: dic: 問題ベクター
+    Returns:
+        list[dict]: 分かち書きリスト
     """
     node = mt.parseToNode(text)
-    nounList = []
+    wakachigaki_list = []
+    while node:
+        wakachigaki_list.append({"_surface": node.surface, "feature": node.feature})
+        node = node.next
+    return wakachigaki_list
+
+
+def get_text_vector(text: str) -> list[dict]:
+    """問題文から問題ベクターを得る
+
+    Args:
+        text(str): 問題文
+
+    Returns:
+        list[dict]: 問題ベクター
+    """
+    node = mt.parseToNode(text)
+    noun_list = []
     elements = []
     while node:
         fields = node.feature.split(",")
@@ -85,7 +100,7 @@ def getVector(text):
         ):
             if node.surface not in elements:
                 elements.append(node.surface)
-                nounList.append(
+                noun_list.append(
                     {
                         "surface": node.surface,
                         "type": fields[0] + "." + fields[1],
@@ -95,136 +110,206 @@ def getVector(text):
                     }
                 )
             else:
-                nounList[
+                noun_list[
                     min(
                         i
-                        for i in range(len(nounList))
-                        if nounList[i]["surface"] == node.surface
+                        for i in range(len(noun_list))
+                        if noun_list[i]["surface"] == node.surface
                     )
                 ]["count"] += 1
 
         node = node.next
-    return nounList
+    return noun_list
 
 
-# 問題ベクター情報からTF-IDFに基づくサマリベクタを取得する
-def getSummaryVector(questionVectors):
-    count = len(questionVectors)
-    nounCount = {}
-    for qv in questionVectors:
-        for v in qv:
-            if v["surface"] in nounCount:
-                nounCount[v["surface"]] += 1
+def get_summary_vector(question_vectors_list: list[list[dict]]) -> list[np.ndarray]:
+    """問題ベクター情報からTF-IDFに基づくサマリベクタを取得する
+
+    Args:
+        question_vectors_list(list[list[dict]]): 問題ベクターリスト
+
+    Returns:
+        list[np.ndarray]: TF-IDFに基づくサマリベクタリスト
+    """
+    count = len(question_vectors_list)
+    noun_count_dict = {}
+    for question_vector in question_vectors_list:
+        for vector in question_vector:
+            if vector["surface"] in noun_count_dict:
+                noun_count_dict[vector["surface"]] += 1
             else:
-                nounCount[v["surface"]] = 1
+                noun_count_dict[vector["surface"]] = 1
 
-    returnList = []
-    for qv in questionVectors:
-        sum = np.zeros([50])
-        for v in qv:
-            pprint(v["vector"] * v["count"] * math.log(count / nounCount[v["surface"]]))
-            sum += v["vector"] * v["count"] * math.log(count / nounCount[v["surface"]])
-        pprint([sum])
-        returnList.append(sum)
+    return_list = []
+    for question_vector in question_vectors_list:
+        tf_idf_sum = np.zeros([50])
+        for vector in question_vector:
+            pprint(
+                vector["vector"]
+                * vector["count"]
+                * math.log(count / noun_count_dict[vector["surface"]])
+            )
+            tf_idf_sum += (
+                vector["vector"]
+                * vector["count"]
+                * math.log(count / noun_count_dict[vector["surface"]])
+            )
+        pprint([tf_idf_sum])
+        return_list.append(tf_idf_sum)
 
-    return returnList
+    return return_list
 
 
-# 単語出現数dictを作成する
-def getNounCountDict(questionVectors):
-    nounCountDict = {}
-    for qv in questionVectors:
-        for v in qv:
-            if v["surface"] in nounCountDict:
-                nounCountDict[v["surface"]] += 1
+def compute_noun_count_dict(question_vectors_list: list[list[dict]]) -> dict:
+    """単語出現数のdictionaryを作成する
+
+    Args:
+        question_vectors_list(list[list[dict]]): 問題ベクターリスト
+
+    Returns:
+        dict: 単語出現数のdictionary
+    """
+    noun_count_dict = {}
+    for question_vector in question_vectors_list:
+        for vector in question_vector:
+            if vector["surface"] in noun_count_dict:
+                noun_count_dict[vector["surface"]] += 1
             else:
-                nounCountDict[v["surface"]] = 1
-    return nounCountDict
+                noun_count_dict[vector["surface"]] = 1
+    return noun_count_dict
 
 
 # 問題ベクター間距離関数
-def getDistance(l1, l2):
-    """問題ベクター間距離関数
-    Args: l1(dict), l2(dict): 問題ベクター
-    Returns: float: 距離
+def compute_distance_bw_question_vectors(
+    question_vectors_1: list[dict], question_vectors_2: list[dict]
+) -> float:
+    """問題ベクター間距離を計算する
+    Args:
+        question_vectors_1(list[dict]): 問題ベクター1
+        question_vectors_2(list[dict]): 問題ベクター2
+
+    Returns:
+        float: 距離
     """
     threshold = 9
-    cosSims = getDirectProduct(l1, l2)
+    cosine_similarity_list = compute_direct_product(
+        question_vectors_1, question_vectors_2
+    )
     dist = 0
-    for i in range(min(threshold, len(cosSims))):
-        dist += 1 - cosSims[i]["cosSim"]  # * (1 / (i+1) ** 0.5)
-    if len(cosSims) < threshold:
-        dist += len(cosSims) - threshold
+    for i in range(min(threshold, len(cosine_similarity_list))):
+        dist += 1 - cosine_similarity_list[i]["cosSim"]  # * (1 / (i+1) ** 0.5)
+    if len(cosine_similarity_list) < threshold:
+        dist += len(cosine_similarity_list) - threshold
     return dist
 
 
 # テキスト樹形図出力
-def getTextDendrogram(num, indent, Z, questions, n):
+def draw_text_dendrogram(
+    branch_number: float,
+    indent_string: str,
+    clustering_result: np.ndarray,
+    questions: list[str],
+    number_of_questions: int,
+) -> list[str]:
     """テキスト樹形図出力
-    Args: num(float): 枝番号
-          indent: 表示する樹形
-          Z: クラスタリング結果
-          questions(list): 問題文リスト
-          n(int): 問題数
-    Returns: list: 樹形図（上から順の1行毎リスト）
+
+    Args:
+        branch_number(float): 枝番号
+        indent_string(str): 表示する樹形
+        clustering_result(np.ndarray): クラスタリング結果
+        questions(list): 問題文リスト
+        number_of_questions(int): 問題数
+
+    Returns:
+        list[str]: 樹形図（上から順の1行毎リスト）
     """
-    if num < n:
-        return [indent + str(int(num)) + "." + questions[int(num)]]
+    if branch_number < number_of_questions:
+        return [
+            indent_string
+            + str(int(branch_number))
+            + "."
+            + questions[int(branch_number)]
+        ]
     else:
-        branchChars = "①②③④⑤⑥⑦⑧⑨"
-        branchRank = int(n * 2 - num - 1)
-        if branchRank <= len(branchChars):
-            branchChar = branchChars[branchRank - 1]
+        branch_characters = "①②③④⑤⑥⑦⑧⑨"
+        branch_rank = int(number_of_questions * 2 - branch_number - 1)
+        if branch_rank <= len(branch_characters):
+            branch_character = branch_characters[branch_rank - 1]
         else:
-            branchChar = "┬"
-        return getTextDendrogram(
-            Z[int(num - n), 0], indent + branchChar, Z, questions, n
-        ) + getTextDendrogram(
-            Z[int(num - n), 1],
-            re.sub("[┬" + branchChars + "]", "│", indent).replace("└", "　") + "└",
-            Z,
+            branch_character = "┬"
+        return draw_text_dendrogram(
+            clustering_result[int(branch_number - number_of_questions), 0],
+            indent_string + branch_character,
+            clustering_result,
             questions,
-            n,
+            number_of_questions,
+        ) + draw_text_dendrogram(
+            clustering_result[int(branch_number - number_of_questions), 1],
+            re.sub("[┬" + branch_characters + "]", "│", indent_string).replace(
+                "└", "　"
+            )
+            + "└",
+            clustering_result,
+            questions,
+            number_of_questions,
         )
 
 
 # 最遠配置リストを得る
-def scatterQuestion(num, Z, dMatrix, n):
+def scatter_questions(
+    branch_number: float,
+    clustering_result: np.ndarray,
+    distance_matrix: np.ndarray,
+    number_of_questions: int,
+) -> list[int]:
     """最遠配置リストを得る
-    Args: num(float): 枝番号
-          Z: クラスタリング結果
-          dMatrix: 距離マトリクス
-          n(int): 問題数
-    Returns: list: 最遠配置リスト
+    Args:
+        branch_number(float): 枝番号
+        clustering_result(np.ndarray): クラスタリング結果
+        distance_matrix(np.ndarray): 距離マトリクス
+        number_of_questions(int): 問題数
+
+    Returns:
+        list[int]: 最遠配置リスト
     """
-    if num < n:
-        return [int(num)]
+    if branch_number < number_of_questions:
+        return [int(branch_number)]
     else:
-        v1 = scatterQuestion(Z[int(num - n), 0], Z, dMatrix, n)
-        v2 = scatterQuestion(Z[int(num - n), 1], Z, dMatrix, n)
+        v1 = scatter_questions(
+            clustering_result[int(branch_number - number_of_questions), 0],
+            clustering_result,
+            distance_matrix,
+            number_of_questions,
+        )
+        v2 = scatter_questions(
+            clustering_result[int(branch_number - number_of_questions), 1],
+            clustering_result,
+            distance_matrix,
+            number_of_questions,
+        )
         i1 = 1
         i2 = 1
         d = 1.0 / (2.0 * (len(v1) + 1) * (len(v2) + 1))
 
         # 2つのリストの間で最も近い要素のインデックスを取得する
-        dMatrixv1v2 = dMatrix[np.ix_(v1, v2)]
+        distance_array = distance_matrix[np.ix_(v1, v2)]
         # print(dMatrixv1v2)
-        minIndex = np.unravel_index(np.argmin(dMatrixv1v2), dMatrixv1v2.shape)
-        minIndexv1 = minIndex[0]
-        minIndexv2 = minIndex[1]
+        min_index = np.unravel_index(np.argmin(distance_array), distance_array.shape)
+        min_index_v1 = min_index[0]
+        min_index_v2 = min_index[1]
         # v1は当該要素が先頭に来るよう要素を移動
-        v1 = v1[minIndexv1:] + v1[0:minIndexv1]
+        v1 = v1[min_index_v1:] + v1[0:min_index_v1]
         # v2は当該要素が真ん中に来るよう要素を移動
-        v2LenHalf = int((len(v2) + 1) / 2)
-        v2 = v2[minIndexv2:] + v2[0:minIndexv2]
-        v2 = v2[v2LenHalf:] + v2[0:v2LenHalf]
+        v2_half_length = int((len(v2) + 1) / 2)
+        v2 = v2[min_index_v2:] + v2[0:min_index_v2]
+        v2 = v2[v2_half_length:] + v2[0:v2_half_length]
 
-        returnList = []
+        return_list = []
         while i1 <= len(v1) or i2 <= len(v2):
             if (i1 / (len(v1) + 1)) > (i2 / (len(v2) + 1) + d):
-                returnList.append(v2[i2 - 1])
+                return_list.append(v2[i2 - 1])
                 i2 += 1
             else:
-                returnList.append(v1[i1 - 1])
+                return_list.append(v1[i1 - 1])
                 i1 += 1
-        return returnList
+        return return_list

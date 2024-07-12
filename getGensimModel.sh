@@ -1,5 +1,5 @@
 #!/bin/bash
-cd quizScatterer/classes/gensimModel
+cd quizScatterer/gensimModel
 if [ $? != 0 ]; then
   exit 255
 fi
