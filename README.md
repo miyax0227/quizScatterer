@@ -75,6 +75,14 @@ rye sync
 make format
 ```
 
+### 実行コマンド
+
+`rye`を使った場合は，`rye run`を最初につけて実行してください．
+
+```shell
+rye run python -m quizScatterer INPUT_FILE (> OUTPUT_FILE)
+```
+
 ## 作者
 
 Miyax ([@mi_yax](https://twitter.com/mi_yax))
