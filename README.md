@@ -1,11 +1,13 @@
 # quizScatterer
+
 ## 概要
+
 日本語のクイズ問題の配置を最適化する（ジャンルで分散させる）ツールです。
 
 ## セットアップ
 
 ```shell
-# リポジトリコピー
+リポジトリコピー
 git clone https://github.com/miyax0227/quizScatterer
 # 必要なライブラリのインストール
 cd quizScatterer
@@ -15,6 +17,14 @@ sudo chmod 755 getGensimModel.sh
 ./getGensimModel.sh
 ```
 
+学習済みモデルのダウンロードは，
+
+```shell
+make get_model
+```
+
+でもできます．
+
 ## コマンド
 
 ```shell
@@ -22,9 +32,49 @@ python3 -m quizScatterer INPUT_FILE (> OUTPUT_FILE)
 ```
 
 例：
+
 ```shell
 python3 -m quizScatterer sample.txt > result.txt
 ```
 
+## `rye`を使ったセットアップ方法
+
+パッケージ管理に`rye`を使うことができます．
+
+### インストール
+
+Mac/Linuxユーザは，
+
+```shell
+make install_rye
+```
+
+でインストールできます．
+
+Windowsの場合は，[`rye`の公式サイト](https://rye.astral.sh/guide/installation/#installing-rye)からバイナリをインストールしてください．
+
+### 必要なパッケージのインストール
+
+```shell
+make install
+```
+
+もしくは，
+
+```shell
+rye sync
+```
+
+でインストールできます．
+
+### フォーマット
+
+`ruff`を使ってコードをフォーマットできます．
+
+```shell
+make format
+```
+
 ## 作者
+
 Miyax ([@mi_yax](https://twitter.com/mi_yax))

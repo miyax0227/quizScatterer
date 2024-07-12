@@ -9,13 +9,13 @@ dependencies = [
     "setuptools>=70.3.0",
     "gensim>=4.3.2",
     "mecab-python3>=1.0.9",
-    "numpy>=2.0.0",
     "pandas>=2.2.2",
     "python-dateutil>=2.9.0.post0",
     "pytz>=2024.1",
-    "scipy>=1.14.0",
+    "scipy<1.13.0",
     "six>=1.16.0",
     "smart-open>=7.0.4",
+    "unidic>=1.1.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -39,7 +39,6 @@ packages = ["quizscatterer"]
 # Lint/Formatter非依存のルール
 [tool.ruff]
 # 除外したいファイル
-# excludeを設定するとデフォルトで設定されている.venv配下などの設定が上書きされるため要注意
 extend-exclude = ["src/quizscatterer/__init__.py"]
 # 行文字数
 line-length = 88
@@ -56,9 +55,6 @@ select = ["E", "F", "I", "PLR", "PD", "NPY", "PL"]
 ignore = ["PLR2004"]
 # auto fixの対象にするルール
 fixable = ["ALL"]
-# auto fixから除外するルール
-# editor.formatOnSaveを使う際に自動でFixされると困るものを指定できます
-unfixable = ["F401"]
 
 # Formatterのルール
 [tool.ruff.format]

@@ -13,7 +13,7 @@ import numpy as np
 exec_path = os.path.dirname(__file__)
 # 学習済みベクターモデルの読込
 word2vec_model = gensim.models.Word2Vec.load(
-    exec_path + "/gensimModel/word2vec.gensim.model"
+    exec_path + "/gensim_model/word2vec.gensim.model"
 ).wv
 # MeCab辞書読込
 mecab_tagger = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
