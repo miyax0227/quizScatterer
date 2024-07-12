@@ -19,8 +19,15 @@ word2vec_model = gensim.models.Word2Vec.load(
 mecab_tagger = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
 
 
-# 問題文正規化
 def regulate_question(question: str) -> str:
+    """問題文を正規化する
+
+    Args:
+        question (str): 問題文
+
+    Returns:
+        str: 正規化された問題文
+    """
     question = question.translate(str.maketrans({"（": "(", "）": ")"}))
     question = re.sub(r"\([\u3041-\u309f・]+\)", "", question)
     question = re.sub(r"[?？]", "", question)
