@@ -2,6 +2,8 @@
 import sys
 
 import numpy as np
+from scipy.cluster.hierarchy import linkage
+from scipy.spatial import distance
 
 from quizscatterer.qs import *
 
