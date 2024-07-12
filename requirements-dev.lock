@@ -8,25 +8,34 @@
 #   with-sources: false
 
 -e file:.
+certifi==2024.7.4
+    # via requests
+charset-normalizer==3.3.2
+    # via requests
 gensim==4.3.2
     # via quizscatterer
+idna==3.7
+    # via requests
 mecab-python3==1.0.9
     # via quizscatterer
-numpy==2.0.0
+numpy==1.26.4
     # via gensim
     # via pandas
-    # via quizscatterer
     # via scipy
 pandas==2.2.2
     # via quizscatterer
+plac==1.4.3
+    # via unidic
 python-dateutil==2.9.0.post0
     # via pandas
     # via quizscatterer
 pytz==2024.1
     # via pandas
     # via quizscatterer
+requests==2.32.3
+    # via unidic
 ruff==0.5.1
-scipy==1.14.0
+scipy==1.12.0
     # via gensim
     # via quizscatterer
 setuptools==70.3.0
@@ -37,7 +46,15 @@ six==1.16.0
 smart-open==7.0.4
     # via gensim
     # via quizscatterer
+tqdm==4.66.4
+    # via unidic
 tzdata==2024.1
     # via pandas
+unidic==1.1.0
+    # via quizscatterer
+urllib3==2.2.2
+    # via requests
+wasabi==0.10.1
+    # via unidic
 wrapt==1.16.0
     # via smart-open

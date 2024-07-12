@@ -15,7 +15,7 @@ from scipy.spatial import distance
 # 実行ファイルパスを取得
 execPath = os.path.dirname(__file__)
 # 学習済みベクターモデルの読込
-wv = gensim.models.Word2Vec.load(execPath + "/gensimModel/word2vec.gensim.model").wv
+wv = gensim.models.Word2Vec.load(execPath + "/gensim_model/word2vec.gensim.model").wv
 # MeCab辞書読込
 mt = MeCab.Tagger("-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
 

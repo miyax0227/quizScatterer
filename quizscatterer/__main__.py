@@ -5,7 +5,7 @@ from pprint import pprint
 
 import numpy as np
 
-from  import *
+from quizscatterer.qs import *
 
 # 引数からファイル名を受け取る
 filename = sys.argv[1]
