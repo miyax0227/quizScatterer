@@ -28,13 +28,13 @@ make get_model
 ## コマンド
 
 ```shell
-python3 -m quizScatterer INPUT_FILE (> OUTPUT_FILE)
+python3 -m quizscatterer INPUT_FILE (> OUTPUT_FILE)
 ```
 
 例：
 
 ```shell
-python3 -m quizScatterer sample.txt > result.txt
+python3 -m quizscatterer sample.txt > result.txt
 ```
 
 ## `rye`を使ったセットアップ方法
@@ -80,7 +80,7 @@ make format
 `rye`を使った場合は，`rye run`を最初につけて実行してください．
 
 ```shell
-rye run python -m quizScatterer INPUT_FILE (> OUTPUT_FILE)
+rye run python -m quizscatterer INPUT_FILE (> OUTPUT_FILE)
 ```
 
 ## 作者
