@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
-from pprint import pprint
 
 import numpy as np
 

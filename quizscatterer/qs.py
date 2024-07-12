@@ -8,9 +8,6 @@ from pprint import pprint
 import gensim
 import MeCab
 import numpy as np
-import pandas as pd
-from scipy.cluster.hierarchy import dendrogram, linkage
-from scipy.spatial import distance
 
 # 実行ファイルパスを取得
 execPath = os.path.dirname(__file__)

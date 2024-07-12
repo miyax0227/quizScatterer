@@ -39,7 +39,6 @@ packages = ["quizscatterer"]
 # Lint/Formatter非依存のルール
 [tool.ruff]
 # 除外したいファイル
-# excludeを設定するとデフォルトで設定されている.venv配下などの設定が上書きされるため要注意
 extend-exclude = ["src/quizscatterer/__init__.py"]
 # 行文字数
 line-length = 88
@@ -56,9 +55,6 @@ select = ["E", "F", "I", "PLR", "PD", "NPY", "PL"]
 ignore = ["PLR2004"]
 # auto fixの対象にするルール
 fixable = ["ALL"]
-# auto fixから除外するルール
-# editor.formatOnSaveを使う際に自動でFixされると困るものを指定できます
-unfixable = ["F401"]
 
 # Formatterのルール
 [tool.ruff.format]
