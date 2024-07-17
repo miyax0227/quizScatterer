@@ -1,0 +1,64 @@
+[project]
+name = "quizscatterer"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "m-uesaka", email = "aleo724@gmail.com" }
+]
+dependencies = [
+    "setuptools>=70.3.0",
+    "gensim>=4.3.2",
+    "mecab-python3>=1.0.9",
+    "pandas>=2.2.2",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2024.1",
+    "scipy<1.13.0",
+    "six>=1.16.0",
+    "smart-open>=7.0.4",
+    "unidic>=1.1.0",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.5.1",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["quizscatterer"]
+
+# Lint/Formatter非依存のルール
+[tool.ruff]
+# 除外したいファイル
+extend-exclude = ["src/quizscatterer/__init__.py"]
+# 行文字数
+line-length = 88
+# インデント幅
+indent-width = 4
+
+# Linterのルール
+[tool.ruff.lint]
+# Lintルール
+# https://docs.astral.sh/ruff/rules/　に記載されているルールのうち、Codeが前方一致するルールが適用されます
+select = ["E", "F", "I", "PLR", "PD", "NPY", "PL"]
+# 除外するLintルール
+# selectで選択したルールから除外したいものを指定できます
+ignore = ["PLR2004"]
+# auto fixの対象にするルール
+fixable = ["ALL"]
+
+# Formatterのルール
+[tool.ruff.format]
+# 文字列をダブルクォートに統一
+quote-style = "double"
+# インデントをタブ文字(\t)からスペースに変換
+indent-style = "space"

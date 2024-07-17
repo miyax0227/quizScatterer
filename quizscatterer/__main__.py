@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
-import os
-from pprint import pprint
 import sys
+
 import numpy as np
-from .classes.qs import *
+from scipy.cluster.hierarchy import linkage
+from scipy.spatial import distance
+
+from quizscatterer.qs import *
 
 # 引数からファイル名を受け取る
 filename = sys.argv[1]
 
 # ファイル読込
 with open(filename) as f:
-  questions = f.read().splitlines()
+    questions = f.read().splitlines()
 
 # 空文字列の行を除く
 questions = [q for q in questions if not q == ""]
@@ -33,27 +35,27 @@ vectors = [getVector(v) for v in questionsForVectors]
 
 # 距離マトリクス生成
 n = len(vectors)
-dMatrix = np.zeros([n,n])
+dMatrix = np.zeros([n, n])
 for i in range(n):
-  for j in range(n):
-    if i == j:
-      dMatrix[i,j] = 0
-    elif i > j:
-      dMatrix[i,j] = getDistance(vectors[i],vectors[j])
-      #dMatrix[i,j] = cos_sim(summaryVectors[i],summaryVectors[j])
-    else:
-      dMatrix[i,j] = getDistance(vectors[j],vectors[i])
-      
+    for j in range(n):
+        if i == j:
+            dMatrix[i, j] = 0
+        elif i > j:
+            dMatrix[i, j] = getDistance(vectors[i], vectors[j])
+            # dMatrix[i,j] = cos_sim(summaryVectors[i],summaryVectors[j])
+        else:
+            dMatrix[i, j] = getDistance(vectors[j], vectors[i])
+
 dArray = distance.squareform(dMatrix)
 
 # 階層クラスタリング
 Z = linkage(dArray, method="ward")
-#pprint(Z)
+# pprint(Z)
 
 # テキスト樹形図出力
-for i in getTextDendrogram(n*2-2, "", Z, questions, n):
-  print(i)
+for i in getTextDendrogram(n * 2 - 2, "", Z, questions, n):
+    print(i)
 
 # 最遠配置リスト出力
-for i in scatterQuestion(n*2-2, Z, dMatrix, n):
-  print(str(i) + "." + questions[i])
+for i in scatterQuestion(n * 2 - 2, Z, dMatrix, n):
+    print(str(i) + "." + questions[i])
