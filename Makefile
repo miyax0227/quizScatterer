@@ -7,7 +7,9 @@ install_rye:
 
 install:
 	rye sync
-
+	mkdir -p ./.venv/lib/python3.12/site-packages/unidic/dicdir
+	touch ./.venv/lib/python3.12/site-packages/unidic/dicdir/mecabrc
+	
 get_model:
 	bash ./getGensimModel.sh
 
