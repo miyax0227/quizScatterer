@@ -12,20 +12,34 @@ certifi==2024.7.4
     # via requests
 charset-normalizer==3.3.2
     # via requests
+coverage==7.6.0
+    # via pytest-cov
 gensim==4.3.2
     # via quizscatterer
 idna==3.7
     # via requests
+iniconfig==2.0.0
+    # via pytest
 mecab-python3==1.0.9
     # via quizscatterer
 numpy==1.26.4
     # via gensim
     # via pandas
     # via scipy
+packaging==24.1
+    # via pytest
+    # via pytest-sugar
 pandas==2.2.2
     # via quizscatterer
 plac==1.4.3
     # via unidic
+pluggy==1.5.0
+    # via pytest
+pytest==8.3.1
+    # via pytest-cov
+    # via pytest-sugar
+pytest-cov==5.0.0
+pytest-sugar==1.0.0
 python-dateutil==2.9.0.post0
     # via pandas
     # via quizscatterer
@@ -46,6 +60,8 @@ six==1.16.0
 smart-open==7.0.4
     # via gensim
     # via quizscatterer
+termcolor==2.4.0
+    # via pytest-sugar
 tqdm==4.66.4
     # via unidic
 tzdata==2024.1
