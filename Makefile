@@ -1,6 +1,7 @@
 .PHONY: install_rye install get_model format clean
 
 SRC=quizscatterer
+TESTS=tests
 
 install_rye:
 	curl -sSf https://rye.astral.sh/get | bash
@@ -16,6 +17,8 @@ get_model:
 format:
 	rye run ruff format $(SRC)
 	rye run ruff check $(SRC) --fix-only
+	rye run ruff format $(TESTS)
+	rye run ruff check $(TESTS) --fix-only
 
 clean:
 	rm -rfv .venv
