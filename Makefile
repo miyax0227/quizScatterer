@@ -20,6 +20,10 @@ format:
 	rye run ruff format $(TESTS)
 	rye run ruff check $(TESTS) --fix-only
 
+test:
+	rye run pytest --cov=quizscatterer/ \
+	--cov-branch --cov-report html:./htmlcov
+
 clean:
 	rm -rfv .venv
 	rm -rfv $(SRC)/gensim_model/*
