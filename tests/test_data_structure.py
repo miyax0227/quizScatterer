@@ -69,8 +69,6 @@ class TestSentenceWordsData:
         assert sentence_word_data.words == word_data_list
         assert sentence_word_data.counts == count_list
 
-        # 上書きできないことのチェック
-
     @staticmethod
     def test_different_length() -> None:
         word_data_list = [
