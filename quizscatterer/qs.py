@@ -4,6 +4,7 @@ import math
 import os
 import re
 from pprint import pprint
+from typing import Any
 
 import gensim
 import MeCab
@@ -90,6 +91,29 @@ def create_wakachigaki_list(text: str) -> list[dict]:
     return wakachigaki_list
 
 
+def check_whether_word_is_considered(node: Any) -> tuple[bool, list[str] | None]:
+    """ノードを考慮するかどうかを判定する
+
+    Args:
+        node(Any): MeCabのNodeオブジェクト
+
+    Returns:
+        tuple[bool, list[str] | None]: ノードを考慮するかどうかと，ノードの情報．
+            ノードを考慮する場合はTrueとノードの情報，それ以外はFalseとNone
+    """
+    fields = node.feature.split(",")
+
+    considers = (
+        fields[0] in ["名詞", "動詞", "形容詞"]
+        and not (fields[0] == "名詞" and fields[1] in ["代名詞", "非自立", "数"])
+        and not (fields[0] == "動詞" and fields[1] in ["接尾"])
+        and not (fields[0] == "動詞" and fields[6] in ["する", "いう", "ある"])
+        and node.surface not in ["年"]
+        and node.surface in word2vec_model
+    )
+    return considers, (fields if considers else None)
+
+
 def get_text_vector(text: str) -> list[dict]:
     """問題文から問題ベクターを得る
 
@@ -103,15 +127,8 @@ def get_text_vector(text: str) -> list[dict]:
     noun_list = []
     elements = []
     while node:
-        fields = node.feature.split(",")
-        if (
-            fields[0] in ["名詞", "動詞", "形容詞"]
-            and not (fields[0] == "名詞" and fields[1] in ["代名詞", "非自立", "数"])
-            and not (fields[0] == "動詞" and fields[1] in ["接尾"])
-            and not (fields[0] == "動詞" and fields[6] in ["する", "いう", "ある"])
-            and node.surface not in ["年"]
-            and node.surface in word2vec_model
-        ):
+        considers, fields = check_whether_word_is_considered(node)
+        if considers:
             if node.surface not in elements:
                 elements.append(node.surface)
                 noun_list.append(

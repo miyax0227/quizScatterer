@@ -59,5 +59,6 @@ for i in qs.draw_text_dendrogram(n * 2 - 2, "", clustering_result, questions, n)
     print(i)
 
 # 最遠配置リスト出力
-for i in qs.scatter_questions(n * 2 - 2, clustering_result, distance_matrix, n):
-    print(str(i) + "." + questions[i])
+optimized_order = qs.scatter_questions(n * 2 - 2, clustering_result, distance_matrix, n)
+for index, number in enumerate(optimized_order):
+    print(f"{index}\t{number}")

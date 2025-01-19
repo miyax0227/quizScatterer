@@ -17,21 +17,21 @@ class WordData:
     word_type: str
     vector: np.ndarray
 
-    def __eq__(self, __value: object) -> bool:
+    def __eq__(self, other_value: object) -> bool:
         """WordDataの等価性を判定する
 
         Args:
-            __value (object): 比較するオブジェクト
+            other_value (object): 比較するオブジェクト
 
         Returns:
             bool: 等価な場合はTrue，それ以外はFalse
         """
-        if not isinstance(__value, WordData):
+        if not isinstance(other_value, WordData):
             return False
         return (
-            self.surface == __value.surface
-            and self.word_type == __value.word_type
-            and np.all(self.vector == __value.vector)
+            self.surface == other_value.surface
+            and self.word_type == other_value.word_type
+            and np.all(self.vector == other_value.vector)
         )
 
 
@@ -63,16 +63,16 @@ class SentenceWordsData:
 
     @staticmethod
     def from_word_data_list(words_data_list: list[WordData]) -> "SentenceWordsData":
-        """単語のリストからSentenceWordsDataを作成する
+        """`WordData`のリストから`SentenceWordsData`を作成する
 
         Args:
-            words_data_list (list[WordData]): 単語のリスト
+            words_data_list (list[WordData]): `WordData`のリスト
 
         Raises:
-            ValueError: words_data_listが空の場合
+            ValueError: `words_data_list`が空の場合
 
         Returns:
-            SentenceWordsData: 単語のリストから作成したSentenceWordsData
+            SentenceWordsData: `WordData`のリストから作成したSentenceWordsData
         """
         if len(words_data_list) == 0:
             raise ValueError("words_data_list must not be empty")
