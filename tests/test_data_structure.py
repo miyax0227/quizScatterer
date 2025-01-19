@@ -21,30 +21,28 @@ class TestWordData:
             word_data.word_type = "名詞.未定義語"
 
     @staticmethod
-    def test_eq_returns_true() -> None:
-        word_data1 = WordData(
-            surface="猫", word_type="名詞.一般", vector=np.array([1.0, 2.0, 3.0])
-        )
-        word_data2 = WordData(
-            surface="猫", word_type="名詞.一般", vector=np.array([1.0, 2.0, 3.0])
-        )
-        assert word_data1 == word_data2
-
-    @staticmethod
     @pytest.mark.parametrize(
-        "surface, word_type, vector",
+        "surface, word_type, vector, expected_result",
         [
-            ("犬", "名詞.一般", np.array([1.0, 2.0, 3.0])),  # surfaceが異なる
-            ("猫", "名詞.未定義語", np.array([1.0, 2.0, 3.0])),  # word_typeが異なる
-            ("猫", "名詞.一般", np.array([1.0, 2.0, 4.0])),  # vectorが異なる
+            ("猫", "名詞.一般", np.array([1.0, 2.0, 3.0]), True),  # 全て同じ
+            ("犬", "名詞.一般", np.array([1.0, 2.0, 3.0]), False),  # surfaceが異なる
+            (
+                "猫",
+                "名詞.未定義語",
+                np.array([1.0, 2.0, 3.0]),
+                False,
+            ),  # word_typeが異なる
+            ("猫", "名詞.一般", np.array([1.0, 2.0, 4.0]), False),  # vectorが異なる
         ],
     )
-    def test_eq_returns_false(surface: str, word_type: str, vector: np.ndarray) -> None:
+    def test_eq(
+        surface: str, word_type: str, vector: np.ndarray, expected_result: bool
+    ) -> None:
         word_data1 = WordData(
             surface="猫", word_type="名詞.一般", vector=np.array([1.0, 2.0, 3.0])
         )
         word_data2 = WordData(surface=surface, word_type=word_type, vector=vector)
-        assert word_data1 != word_data2
+        assert (word_data1 == word_data2) is expected_result
 
 
 class TestSentenceWordsData:

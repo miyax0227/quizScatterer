@@ -31,8 +31,11 @@ def regulate_question(question: str) -> str:
     Returns:
         str: 正規化された問題文
     """
+    # 全角括弧を半角括弧に変換
     question = question.translate(str.maketrans({"（": "(", "）": ")"}))
+    # ふりがなを削除
     question = re.sub(r"\([\u3041-\u309f・]+\)", "", question)
+    # 疑問符を削除
     question = re.sub(r"[?？]", "", question)
     return question
 

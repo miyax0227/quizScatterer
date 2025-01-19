@@ -32,7 +32,7 @@ class WordData:
         return (
             self.surface == other_value.surface
             and self.word_type == other_value.word_type
-            and np.all(self.vector == other_value.vector)
+            and np.allclose(self.vector, other_value.vector)
         )
 
 
