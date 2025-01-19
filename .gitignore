@@ -3,3 +3,4 @@ dist/
 quizscatterer.egg-info/
 quizscatterer/gensim_model/*
 !quizscatterer/gensim_model/.gitkeep
+result.txt

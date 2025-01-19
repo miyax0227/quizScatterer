@@ -75,6 +75,16 @@ rye sync
 make format
 ```
 
+### テスト
+
+`pytest`によるテストを実行するには，
+
+```shell
+make test
+```
+
+を実行してください．
+
 ### 実行コマンド
 
 `rye`を使った場合は，`rye run`を最初につけて実行してください．

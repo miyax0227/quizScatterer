@@ -4,10 +4,13 @@ import math
 import os
 import re
 from pprint import pprint
+from typing import Any
 
 import gensim
 import MeCab
 import numpy as np
+
+from quizscatterer.data_structure import SentenceWordsData, WordData
 
 # 実行ファイルパスを取得
 exec_path = os.path.dirname(__file__)
@@ -28,8 +31,11 @@ def regulate_question(question: str) -> str:
     Returns:
         str: 正規化された問題文
     """
+    # 全角括弧を半角括弧に変換
     question = question.translate(str.maketrans({"（": "(", "）": ")"}))
+    # ふりがなを削除
     question = re.sub(r"\([\u3041-\u309f・]+\)", "", question)
+    # 疑問符を削除
     question = re.sub(r"[?？]", "", question)
     return question
 
@@ -46,28 +52,26 @@ def compute_cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
-def compute_direct_product(
-    question_vectors_list_1: list[dict], question_vectors_list_2: list[dict]
+def compute_word_similarity_list(
+    sentence_words_data_1: SentenceWordsData, sentence_words_data_2: SentenceWordsData
 ) -> list[dict]:
     """問題ベクターから単語対類似度リスト（類似度が高い順）を得る
     Args:
-        question_vectors_list_1(list[dict]): 問題ベクター
-        question_vectors_list_2(list[dict]): 問題ベクター
+        sentence_words_data_1(SentenceWordsData): 問題ベクター1
+        sentence_words_data_2(SentenceWordsData): 問題ベクター2
 
     Returns:
         list[dict]: 単語対類似度リスト
     """
     direct_product_list = []
-    for question_vector_1, question_vector_2 in itertools.product(
-        question_vectors_list_1, question_vectors_list_2
+    for word_1, word_2 in itertools.product(
+        sentence_words_data_1.words, sentence_words_data_2.words
     ):
         direct_product_list.append(
             {
-                "word1": question_vector_1["surface"],
-                "word2": question_vector_2["surface"],
-                "cosSim": compute_cosine_similarity(
-                    question_vector_1["vector"], question_vector_2["vector"]
-                ),
+                "word1": word_1.surface,
+                "word2": word_2.surface,
+                "cosSim": compute_cosine_similarity(word_1.vector, word_2.vector),
             }
         )
     return sorted(direct_product_list, key=lambda x: x["cosSim"], reverse=True)
@@ -90,53 +94,59 @@ def create_wakachigaki_list(text: str) -> list[dict]:
     return wakachigaki_list
 
 
-def get_text_vector(text: str) -> list[dict]:
+def check_whether_word_is_considered(node: Any) -> tuple[bool, list[str] | None]:
+    """ノードを考慮するかどうかを判定する
+
+    Args:
+        node(Any): MeCabのNodeオブジェクト
+
+    Returns:
+        tuple[bool, list[str] | None]: ノードを考慮するかどうかと，ノードの情報．
+            ノードを考慮する場合はTrueとノードの情報，それ以外はFalseとNone
+    """
+    fields = node.feature.split(",")
+
+    considers = (
+        fields[0] in ["名詞", "動詞", "形容詞"]
+        and not (fields[0] == "名詞" and fields[1] in ["代名詞", "非自立", "数"])
+        and not (fields[0] == "動詞" and fields[1] in ["接尾"])
+        and not (fields[0] == "動詞" and fields[6] in ["する", "いう", "ある"])
+        and node.surface not in ["年"]
+        and node.surface in word2vec_model
+    )
+    return considers, (fields if considers else None)
+
+
+def get_sentence_words_data(text: str) -> SentenceWordsData:
     """問題文から問題ベクターを得る
 
     Args:
         text(str): 問題文
 
     Returns:
-        list[dict]: 問題ベクター
+        SentenceWordsData: 問題ベクター
     """
     node = mecab_tagger.parseToNode(text)
-    noun_list = []
-    elements = []
+
+    word_data_list: list[WordData] = []
     while node:
-        fields = node.feature.split(",")
-        if (
-            fields[0] in ["名詞", "動詞", "形容詞"]
-            and not (fields[0] == "名詞" and fields[1] in ["代名詞", "非自立", "数"])
-            and not (fields[0] == "動詞" and fields[1] in ["接尾"])
-            and not (fields[0] == "動詞" and fields[6] in ["する", "いう", "ある"])
-            and node.surface not in ["年"]
-            and node.surface in word2vec_model
-        ):
-            if node.surface not in elements:
-                elements.append(node.surface)
-                noun_list.append(
-                    {
-                        "surface": node.surface,
-                        "type": fields[0] + "." + fields[1],
-                        "fields": fields,
-                        "vector": word2vec_model[node.surface],
-                        "count": 1,
-                    }
-                )
-            else:
-                noun_list[
-                    min(
-                        i
-                        for i in range(len(noun_list))
-                        if noun_list[i]["surface"] == node.surface
-                    )
-                ]["count"] += 1
-
+        considers, fields = check_whether_word_is_considered(node)
+        if considers:
+            word_data = WordData(
+                surface=node.surface,
+                word_type=fields[0] + "." + fields[1],
+                vector=word2vec_model[node.surface],
+            )
+            word_data_list.append(word_data)
         node = node.next
-    return noun_list
+
+    sentence_words_data = SentenceWordsData.from_word_data_list(word_data_list)
+    return sentence_words_data
 
 
-def get_summary_vector(question_vectors_list: list[list[dict]]) -> list[np.ndarray]:
+def get_summary_vector(
+    sentence_words_data_list: list[SentenceWordsData],
+) -> list[np.ndarray]:
     """問題ベクター情報からTF-IDFに基づくサマリベクタを取得する
 
     Args:
@@ -145,28 +155,22 @@ def get_summary_vector(question_vectors_list: list[list[dict]]) -> list[np.ndarr
     Returns:
         list[np.ndarray]: TF-IDFに基づくサマリベクタリスト
     """
-    count = len(question_vectors_list)
-    noun_count_dict = {}
-    for question_vector in question_vectors_list:
-        for vector in question_vector:
-            if vector["surface"] in noun_count_dict:
-                noun_count_dict[vector["surface"]] += 1
-            else:
-                noun_count_dict[vector["surface"]] = 1
+    number_of_sentences = len(sentence_words_data_list)
+    noun_count_dict = compute_noun_count_dict(sentence_words_data_list)
 
     return_list = []
-    for question_vector in question_vectors_list:
+    for sentence_words_data in sentence_words_data_list:
         tf_idf_sum = np.zeros([50])
-        for vector in question_vector:
+        for word, count in sentence_words_data:
             pprint(
-                vector["vector"]
-                * vector["count"]
-                * math.log(count / noun_count_dict[vector["surface"]])
+                word.vector
+                * count
+                * math.log(number_of_sentences / noun_count_dict[word.surface])
             )
             tf_idf_sum += (
-                vector["vector"]
-                * vector["count"]
-                * math.log(count / noun_count_dict[vector["surface"]])
+                word.vector
+                * count
+                * math.log(number_of_sentences / noun_count_dict[word.surface])
             )
         pprint([tf_idf_sum])
         return_list.append(tf_idf_sum)
@@ -174,47 +178,48 @@ def get_summary_vector(question_vectors_list: list[list[dict]]) -> list[np.ndarr
     return return_list
 
 
-def compute_noun_count_dict(question_vectors_list: list[list[dict]]) -> dict:
+def compute_noun_count_dict(sentence_words_data_list: list[SentenceWordsData]) -> dict:
     """単語出現数のdictionaryを作成する
 
     Args:
-        question_vectors_list(list[list[dict]]): 問題ベクターリスト
+        question_vectors_list(list[SentenceWordsData]): 問題ベクターリスト
 
     Returns:
-        dict: 単語出現数のdictionary
+        dict: 単語出現数のdictionary．キーは単語，値は出現数
     """
     noun_count_dict = {}
-    for question_vector in question_vectors_list:
-        for vector in question_vector:
-            if vector["surface"] in noun_count_dict:
-                noun_count_dict[vector["surface"]] += 1
+    for sentence_words_data in sentence_words_data_list:
+        for word in sentence_words_data.words:
+            if word.surface in noun_count_dict:
+                noun_count_dict[word.surface] += 1
             else:
-                noun_count_dict[vector["surface"]] = 1
+                noun_count_dict[word.surface] = 1
     return noun_count_dict
 
 
 # 問題ベクター間距離関数
 def compute_distance_bw_question_vectors(
-    question_vectors_1: list[dict], question_vectors_2: list[dict]
+    sentence_words_data_1: SentenceWordsData, sentence_words_data_2: SentenceWordsData
 ) -> float:
     """問題ベクター間距離を計算する
     Args:
-        question_vectors_1(list[dict]): 問題ベクター1
-        question_vectors_2(list[dict]): 問題ベクター2
+        sentence_words_data_1(SentenceWordsData): 問題ベクター1
+        sentence_words_data_2(SentenceWordsData): 問題ベクター2
 
     Returns:
         float: 距離
     """
+    # TODO: しきい値はパラメータ化する
     threshold = 9
-    cosine_similarity_list = compute_direct_product(
-        question_vectors_1, question_vectors_2
+    cosine_similarity_list = compute_word_similarity_list(
+        sentence_words_data_1, sentence_words_data_2
     )
-    dist = 0
+    distance = 0
     for i in range(min(threshold, len(cosine_similarity_list))):
-        dist += 1 - cosine_similarity_list[i]["cosSim"]  # * (1 / (i+1) ** 0.5)
+        distance += 1 - cosine_similarity_list[i]["cosSim"]  # * (1 / (i+1) ** 0.5)
     if len(cosine_similarity_list) < threshold:
-        dist += len(cosine_similarity_list) - threshold
-    return dist
+        distance += len(cosine_similarity_list) - threshold
+    return distance
 
 
 # テキスト樹形図出力
