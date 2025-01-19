@@ -117,3 +117,30 @@ class TestSentenceWordsData:
         assert sentence_word_data.words == word_data_list[:-1]
         # 「客」は2回カウントされている．
         assert sentence_word_data.counts == [1, 2, 1, 1]
+
+    @staticmethod
+    def test_iter() -> None:
+        word_data_list = [
+            WordData(
+                surface="隣", word_type="名詞.一般", vector=np.array([1.0, 2.0, 3.0])
+            ),
+            WordData(
+                surface="客", word_type="名詞.一般", vector=np.array([1.0, 2.0, 4.0])
+            ),
+            WordData(
+                surface="柿", word_type="名詞.一般", vector=np.array([1.0, 3.0, 5.0])
+            ),
+            WordData(
+                surface="喰う", word_type="動詞.自立", vector=np.array([2.0, 3.0, 4.0])
+            ),
+        ]
+        count_list = [1, 2, 1, 1]
+        sentence_word_data = SentenceWordsData(words=word_data_list, counts=count_list)
+        for word, count in sentence_word_data:
+            word_index = word_data_list.index(word)
+            assert word in word_data_list
+            assert count in count_list
+            assert word.surface == word_data_list[word_index].surface
+            assert word.word_type == word_data_list[word_index].word_type
+            np.testing.assert_allclose(word.vector, word_data_list[word_index].vector)
+            assert count == count_list[word_index]

@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import numpy as np
@@ -60,6 +61,16 @@ class SentenceWordsData:
 
         if any(count <= 0 for count in self.counts):
             raise ValueError("counts must be positive")
+
+    def __iter__(self) -> Iterator[tuple[WordData, int]]:
+        """SentenceWordsDataのイテレータを返す
+        イテレータは，(WordData, int)のタプルを返す
+
+        Returns:
+            Iterator: イテレータ
+        """
+        for word, count in zip(self.words, self.counts):
+            yield word, count
 
     @staticmethod
     def from_word_data_list(words_data_list: list[WordData]) -> "SentenceWordsData":

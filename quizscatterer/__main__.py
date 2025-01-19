@@ -21,7 +21,7 @@ questions = [q for q in questions if not q == ""]
 questionsForVectors = [qs.regulate_question(q) for q in questions]
 
 # ベクター作成
-vectors = [qs.get_text_vector(v) for v in questionsForVectors]
+sentence_words_data_list = [qs.get_sentence_words_data(v) for v in questionsForVectors]
 
 # サンプル
 # pprint(vectors[41])
@@ -34,7 +34,7 @@ vectors = [qs.get_text_vector(v) for v in questionsForVectors]
 # nounCountDict = getNounCountDict(vectors)
 
 # 距離マトリクス生成
-n = len(vectors)
+n = len(sentence_words_data_list)
 distance_matrix = np.zeros([n, n])
 for i in range(n):
     for j in range(n):
@@ -42,11 +42,11 @@ for i in range(n):
             distance_matrix[i, j] = 0
         elif i > j:
             distance_matrix[i, j] = qs.compute_distance_bw_question_vectors(
-                vectors[i], vectors[j]
+                sentence_words_data_list[i], sentence_words_data_list[j]
             )
         else:
             distance_matrix[i, j] = qs.compute_distance_bw_question_vectors(
-                vectors[j], vectors[i]
+                sentence_words_data_list[j], sentence_words_data_list[i]
             )
 
 distance_array = distance.squareform(distance_matrix)
