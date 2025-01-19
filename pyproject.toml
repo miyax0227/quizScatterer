@@ -3,7 +3,8 @@ name = "quizscatterer"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
-    { name = "m-uesaka", email = "aleo724@gmail.com" }
+    { name = "m-uesaka", email = "aleo724@gmail.com" },
+    { name = "miyax0227", email = ""}
 ]
 dependencies = [
     "setuptools>=70.3.0",
